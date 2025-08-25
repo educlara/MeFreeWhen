@@ -142,6 +142,62 @@
             font-size: 12px;
         }
 
+        .timeslots-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .submit-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #229954;
+        }
+
+        .submit-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+
         @media (max-width: 768px) {
             .calendar-header {
                 display: none;
@@ -315,19 +371,39 @@
         <div class="selected-list" id="selectedList">
             <span style="color: #7f8c8d; font-style: italic;">No slots selected</span>
         </div>
+
+        <!-- Added form for submitting selected slots -->
+        <div class="timeslots-form" id="timeslotsForm" style="display: none;">
+            <div class="form-group">
+                <label for="netIdInput">Your NetID:</label>
+                <input type="text" id="netIdInput" placeholder="Enter your NetID" required>
+            </div>
+            <button type="button" id="submitBtn" class="submit-btn">Submit timeslots</button>
+        </div>
     </div>
 
+    <script type="text/javascript" src="js/purify.min.js"></script>
+
     <script>
+
+        /* Direction */
+        alert('1. Please select which time slots throughout the week you are available to have a 50-minute precept for SML312.\n2. Once you\'ve made your selections, go to the bottom of the page and enter your NetID and click "Submit".');
+
         const selectedSlots = new Set();
         const selectedListElement = document.getElementById('selectedList');
+        const timeslotsForm = document.getElementById('timeslotsForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const netIdInput = document.getElementById('netIdInput');
 
         function updateSelectedDisplay() {
             if (selectedSlots.size === 0) {
                 selectedListElement.innerHTML = '<span style="color: #7f8c8d; font-style: italic;">No slots selected</span>';
+                timeslotsForm.style.display = 'none'; // Hide form when no slots selected
             } else {
                 selectedListElement.innerHTML = Array.from(selectedSlots)
                     .map(slot => `<div class="selected-item">${slot}</div>`)
                     .join('');
+                timeslotsForm.style.display = 'block'; // Show form when slots are selected
             }
         }
 
@@ -354,6 +430,64 @@
 
                     updateSelectedDisplay();
                 });
+            });
+        });
+
+        /* Send data */
+        submitBtn.addEventListener('click', function () {
+            let netId = netIdInput.value.trim();
+            netId = DOMPurify.sanitize(netId);
+
+            if (!netId || netId.trim() === '') {
+                alert('Please enter your NetID');
+                return;
+            }
+
+            if (selectedSlots.size === 0) {
+                alert('Please select at least one time slot');
+                return;
+            }
+
+            // Create timeslots summary
+            const timeslotsSummary = {
+                source: 'EduclaraMeFreeWhen',
+                netId: netId,
+                timeslots: Array.from(selectedSlots),
+                timestamp: new Date().toISOString()
+            };
+
+            // Make POST request
+            fetch('https://script.google.com/macros/s/AKfycbx7y777A2sTqJIFpSGjY3KgE6MswMiIzRIBfOWoDMg5pGM4V0FqSORNgqufuW7-BGcgCg/exec', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(timeslotsSummary)
+            }).then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return res.json();
+            }).then(data => {
+                if (data.status === 'error') {
+                    console.log('Error: ' + JSON.stringify(data));
+                    alert(`There was an error submitting your timeslots (${data.message}). Please try again.`);
+                } else {
+                    console.log('Success: ' + JSON.stringify(data));
+                    alert(`Timeslots submitted successfully!\n\nNetID: ${data.netId}\nSelected slots:\n${Array.from(data.timeslots).join('\n')}`);
+
+                    // Reset form
+                    selectedSlots.clear();
+                    netIdInput.value = '';
+                    document.querySelectorAll('.time-slot.selected').forEach(slot => {
+                        slot.classList.remove('selected');
+                        slot.classList.add('available');
+                    });
+                    updateSelectedDisplay();
+                }
+            }).catch((err) => {
+                console.error('Error:', err);
+                alert(`There was an error submitting your time slots (${err.message}). Please try again.`);
             });
         });
     </script>
