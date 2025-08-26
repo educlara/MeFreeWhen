@@ -251,7 +251,7 @@
                     AM-10:25 AM</div>
                 <div class="time-slot available duration-50" data-day="Monday" data-time="10:40 AM-11:30 AM">10:40
                     AM-11:30 AM</div>
-                <!-- Added spacing div to represent gap between sessions -->
+                <!-- Spacing div to represent gap between sessions -->
                 <div style="height: 40px;"></div>
                 <div class="time-slot available duration-50" data-day="Monday" data-time="12:15 PM-1:05 PM">12:15
                     PM-1:05 PM</div>
@@ -372,7 +372,7 @@
             <span style="color: #7f8c8d; font-style: italic;">No slots selected</span>
         </div>
 
-        <!-- Added form for submitting selected slots -->
+        <!-- Form for submitting selected slots -->
         <div class="timeslots-form" id="timeslotsForm" style="display: none;">
             <div class="form-group">
                 <label for="netIdInput">Your NetID:</label>
@@ -383,114 +383,7 @@
     </div>
 
     <script type="text/javascript" src="js/purify.min.js"></script>
-
-    <script>
-
-        /* Direction */
-        alert('1. Please select which time slots throughout the week you are available to have a 50-minute precept for SML312.\n2. Once you\'ve made your selections, go to the bottom of the page and enter your NetID and click "Submit".');
-
-        const selectedSlots = new Set();
-        const selectedListElement = document.getElementById('selectedList');
-        const timeslotsForm = document.getElementById('timeslotsForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const netIdInput = document.getElementById('netIdInput');
-
-        function updateSelectedDisplay() {
-            if (selectedSlots.size === 0) {
-                selectedListElement.innerHTML = '<span style="color: #7f8c8d; font-style: italic;">No slots selected</span>';
-                timeslotsForm.style.display = 'none'; // Hide form when no slots selected
-            } else {
-                selectedListElement.innerHTML = Array.from(selectedSlots)
-                    .map(slot => `<div class="selected-item">${slot}</div>`)
-                    .join('');
-                timeslotsForm.style.display = 'block'; // Show form when slots are selected
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const availableSlots = document.querySelectorAll('.time-slot.available');
-
-            availableSlots.forEach(slot => {
-                slot.addEventListener('click', function () {
-                    const day = this.dataset.day;
-                    const time = this.dataset.time;
-                    const slotKey = `${day} ${time}`;
-
-                    if (this.classList.contains('selected')) {
-                        // Deselect
-                        this.classList.remove('selected');
-                        this.classList.add('available');
-                        selectedSlots.delete(slotKey);
-                    } else {
-                        // Select
-                        this.classList.remove('available');
-                        this.classList.add('selected');
-                        selectedSlots.add(slotKey);
-                    }
-
-                    updateSelectedDisplay();
-                });
-            });
-        });
-
-        /* Send data */
-        submitBtn.addEventListener('click', function () {
-            let netId = netIdInput.value.trim();
-            netId = DOMPurify.sanitize(netId);
-
-            if (!netId || netId.trim() === '') {
-                alert('Please enter your NetID');
-                return;
-            }
-
-            if (selectedSlots.size === 0) {
-                alert('Please select at least one time slot');
-                return;
-            }
-
-            // Create timeslots summary
-            const timeslotsSummary = {
-                source: 'EduclaraMeFreeWhen',
-                netId: netId,
-                timeslots: Array.from(selectedSlots),
-                timestamp: new Date().toISOString()
-            };
-
-            // Make POST request
-            fetch('https://script.google.com/macros/s/AKfycbx7y777A2sTqJIFpSGjY3KgE6MswMiIzRIBfOWoDMg5pGM4V0FqSORNgqufuW7-BGcgCg/exec', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(timeslotsSummary)
-            }).then(res => {
-                if (!res.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return res.json();
-            }).then(data => {
-                if (data.status === 'error') {
-                    console.log('Error: ' + JSON.stringify(data));
-                    alert(`There was an error submitting your timeslots (${data.message}). Please try again.`);
-                } else {
-                    console.log('Success: ' + JSON.stringify(data));
-                    alert(`Timeslots submitted successfully!\n\nNetID: ${data.netId}\nSelected slots:\n${Array.from(data.timeslots).join('\n')}`);
-
-                    // Reset form
-                    selectedSlots.clear();
-                    netIdInput.value = '';
-                    document.querySelectorAll('.time-slot.selected').forEach(slot => {
-                        slot.classList.remove('selected');
-                        slot.classList.add('available');
-                    });
-                    updateSelectedDisplay();
-                }
-            }).catch((err) => {
-                console.error('Error:', err);
-                alert(`There was an error submitting your time slots (${err.message}). Please try again.`);
-            });
-        });
-    </script>
+    <script src="js/script.js"></script>
 </body>
 
 </html>
