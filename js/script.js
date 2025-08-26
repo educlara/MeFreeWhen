@@ -1,6 +1,6 @@
 
 /* Direction */
-alert('1. Please select which time slots throughout the week you are available to have a 50-minute precept for SML312.\n2. Once you\'ve made your selections, go to the bottom of the page and enter your NetID and click "Submit".');
+alert('1. Please select which time slots throughout the week you are available to have a 50-minute precept for SML312.\n2. Once you\'ve made your selections, go to the bottom of the page and enter your NetID and click "Submit".\n3. If you made a mistake in your selections, you can just reselect your correct availabilities and then resubmit with your NetID.');
 
 const selectedSlots = new Set();
 let sortedSchedule = [];
